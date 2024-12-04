@@ -17,7 +17,7 @@ var impervious_surface = ee.Image('MODIS/006/MCD12Q1/2013_01_01')
 // Load the Global Impervious Surface Dataset (GISD30) for the period 1985-2020
 // The paper: https://essd.copernicus.org/articles/14/1831/2022/
 
-var palette = ["#808080", "#006400", "#228B22", "#32CD32", "#ADFF2F", "#FFFF00", "#FFA500", "#FF0000"];
+var palette = ["#808080", "#006400", "#228B22", "#32CD32", "#ADFF2F", "#lFFFF00", "#FFA500", "#FF0000"];
 
 var snazzy = require("users/aazuspan/snazzy:styles");
 snazzy.addStyle("https://snazzymaps.com/style/132/light-gray", "Grayscale");

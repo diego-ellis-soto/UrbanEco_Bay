@@ -26,7 +26,7 @@ bay_area_bbox <- c(xmin = -123.1738, ymin = 37.5398, xmax = -122.0818, ymax = 37
 # Larger Bay Area
 # bay_area_bbox <- c(xmin = -123.00, ymin = 37.00, xmax = -121.50, ymax = 38.50)
 crssa=4326
-A
+
 get_osm_restaurants = function(bbox_area){
   rest <- opq(bbox = bbox_area) %>%
     add_osm_feature(key = "amenity", value = "restaurant") %>%
@@ -99,30 +99,30 @@ puzzles_lauren_sf_buffered |> data.frame() |> select(-geometry) |>
   write.csv(file = '/Users/diegoellis/Desktop/Projects/Postdoc/OSM_for_Ecology/puzzles_lauren_sf_buffered_restaurant_1km.csv')
 
 
-
-mapview(df_buffer,
-        col.regions = "blue",
-        layer.name = "Puzzle Locations",
-        legend = TRUE,
-        cex = 8
-        ) +
-  mapview(rest_BA$osm_points,
-          col.regions = "green",
-          legend = TRUE,
-          cex = 4,
-          alpha = 0.7)
-
-require(mapview)
-
-# dream policy: reimagining sf + justice 40 + biodiv data + gaps identify + 
-# Number of restaurants within 1km buffer of UWin Locations and within Laurens rasters
-# Input:
-
-mapview(puzzles_lauren_sf_buffered, 
-        zcol = "restaurant_count", 
-        layer.name = "Restaurant Count per Buffer", 
-        col.regions = viridis::viridis, 
-        alpha.regions = 0.8)
+# 
+# mapview(df_buffer,
+#         col.regions = "blue",
+#         layer.name = "Puzzle Locations",
+#         legend = TRUE,
+#         cex = 8
+#         ) +
+#   mapview(rest_BA$osm_points,
+#           col.regions = "green",
+#           legend = TRUE,
+#           cex = 4,
+#           alpha = 0.7)
+# 
+# require(mapview)
+# 
+# # dream policy: reimagining sf + justice 40 + biodiv data + gaps identify + 
+# # Number of restaurants within 1km buffer of UWin Locations and within Laurens rasters
+# # Input:
+# 
+# mapview(puzzles_lauren_sf_buffered, 
+#         zcol = "restaurant_count", 
+#         layer.name = "Restaurant Count per Buffer", 
+#         col.regions = viridis::viridis, 
+#         alpha.regions = 0.8)
 
 # Agreement with iNaturalist and eBird + movement
 # -> correlation trail counter information with movement from placer AI has good correlation

@@ -11,9 +11,10 @@ ndvi  = raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayAre
 continents <- ne_countries(scale = "medium", returnclass = "sf")
 america_continents <- continents[continents$continent %in% c("North America"), ]
 america_continents <- st_transform(america_continents, crs(ndvi))
-puzzles_lauren_spatial <- as(puzzles_lauren_sf_buffered_trans, "Spatial")
-ndvi_masked <- mask(ndvi, america_continents)
-mapview(ndvi_masked)
+
+# puzzles_lauren_spatial <- as(puzzles_lauren_sf_buffered_trans, "Spatial")
+# ndvi_masked <- mask(ndvi, america_continents)
+mapview(ndvi)
 
 # Impervious surface: from this paper: https://essd.copernicus.org/articles/14/1831/2022/
 imp_surf_30 =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_GISD30_Impervious_Surface_30m.tif')
@@ -21,13 +22,13 @@ mapview(imp_surf_30)
 
 
 # Did not work:
-imp_surf_MODIS =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_Impervious_Surface_MODIS_500m.tif')
-mapview(imp_surf_MODIS)
+# imp_surf_MODIS =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_Impervious_Surface_MODIS_500m.tif')
+# mapview(imp_surf_MODIS)
 
 #  
-human_mod_americas_masked = raster('/Users/diegoellis/Downloads/hmod_americas_masked.tif')
+human_mod_americas_masked = raster('/Users/diegoellis/Downloads/PressPulsePause/hmod_americas_masked.tif')
 continents <- ne_countries(scale = "medium", returnclass = "sf")
-bio1_masked = raster('/Users/diegoellis/Downloads/bio1_americas_masked.tif')
+bio1_masked = raster('/Users/diegoellis/Downloads/PressPulsePause/bio1_americas_masked.tif')
 # High Res Landcover
 bayarea = raster('/Users/diegoellis/Desktop/Projects/Postdoc/OSM_for_Ecology/BayArea_OSM-enhanced_lcover_map.tif')
 
@@ -72,18 +73,21 @@ cropped_raster <- crop(CEC_map, bbox_vect)
 plot(cropped_raster)
 
 # Clip 
-
+require(terra)
 puzzles_lauren_sf_anno_sp_sf_vect = vect(puzzles_lauren_sf_anno_sp_sf)
 
 plot(crop(CEC_map, puzzles_lauren_sf_anno_sp_sf_vect))
 
+# landcovermap_coarse_lauren_study_area = crop(CEC_map, puzzles_lauren_sf_anno_sp_sf_vect)
 
-
-
-landcovermap_coarse_lauren_study_area = crop(CEC_map, puzzles_lauren_sf_anno_sp_sf_vect)
-
-crop(bayarea, st_bbox(puzzles_lauren_sf_anno_sp_sf_vect[! puzzles_lauren_sf_anno_sp_sf_vect$Name == 'Fahrer Home',]))
+# crop(bayarea, st_bbox(puzzles_lauren_sf_anno_sp_sf_vect[! puzzles_lauren_sf_anno_sp_sf_vect$Name == 'Fahrer Home',]))
 
 # Fahrer Home 
 
+ncld_imp_surf_2023 <- raster("/Users/diegoellis/Downloads/NLCD_impervious_2021_release_all_files_20230630/nlcd_2021_impervious_l48_20230630.img")
 
+puzzle_sp_tmp <- st_transform(st_as_sf(puzzle_sp), crs(ncld_imp_surf_2021))
+cropped_raster <- crop(ncld_imp_surf_2021, extent(st_bbox(puzzle_sp_tmp)))
+plot(cropped_raster)
+# https://www.mrlc.gov/data/type/urban-imperviousness
+puzzle_sp_tmp$imp_surf = raster::extract(cropped_raster, puzzle_sp_tmp)

@@ -7,6 +7,9 @@ puzzles_lauren_sf = read.csv('/Users/diegoellis/Downloads/StantonPuzzleStudyLoca
   st_as_sf(coords = c("Long", "Lat"), crs = 4326)
 
 
+puzzle_sp = as(puzzles_lauren_sf, 'Spatial')
+
+
 # Load income and race
 source('Code/Functions/fun_income_race_points.R')
 source('Code/get_income_popden_race.R')
@@ -29,6 +32,7 @@ puzzles_lauren_sf_anno = puzzles_lauren_sf |>
   left_join(puzzle_sf_percent_white, by='Name') |>
   left_join(puzzle_sf_pop_hous_dens, by='Name')
 
+
 # --- --- --- --- --- --- --- --- --- ---
 # Link Restaurant counts:
 # --- --- --- --- --- --- --- --- --- ---
@@ -36,24 +40,15 @@ puzzles_lauren_sf_anno = puzzles_lauren_sf |>
 puzzles_lauren_sf_anno = puzzles_lauren_sf_anno |> left_join(data.frame(puzzles_lauren_sf_buffered)[,c('Name', 'restaurant_count')])
 
 # --- --- --- --- --- --- --- --- --- ---
-# Landcover type
+# Landcover type coarse
+puzzles_lauren_sf_anno_sp = as(puzzles_lauren_sf_anno, 'Spatial')
 
-
-puzzles_lauren_sf_anno_sp$landcover = extract(bayarea, puzzles_lauren_sf_anno_sp)
+puzzles_lauren_sf_anno_sp$landcover = raster::extract(bayarea, puzzles_lauren_sf_anno_sp)
 
 puzzles_lauren_sf_anno_sp$landcover_i = as.integer(round(puzzles_lauren_sf_anno_sp$landcover))  
 
-
-
-puzzles_lauren_sf_anno_sp$nat_CEC_map = extract(CEC_map, st_as_sf(puzzles_lauren_sf_anno_sp))
-
-
-# puzzles_lauren_sf_anno_sp_landcover_tye 
-
-
-
+# puzzles_lauren_sf_anno_sp$nat_CEC_map = extract(CEC_map, st_as_sf(puzzles_lauren_sf_anno_sp))
 # --- --- --- --- --- --- --- --- --- ---
-
 
 # --- --- --- --- --- --- --- --- --- ---
 # Remote sensing variables: NDVI, NALDC, Impervious Surface, Human Footprint, Mean Annual Temperature
@@ -73,14 +68,24 @@ puzzles_lauren_sf_anno_sp$bio_1 = extract(bio1_masked, puzzles_lauren_sf_anno_sp
 # National Landcover Data:
 puzzles_lauren_sf_anno_sp_sf$CEC_mal_class_en = extract(CEC_map$Class_EN$Class_EN, puzzles_lauren_sf_anno_sp_sf)
 puzzles_lauren_sf_anno_sp_sf$CEC_mal_class_en =  puzzles_lauren_sf_anno_sp_sf$CEC_mal_class_en$Class_EN
+View(table(puzzles_lauren_sf_anno_sp_sf$CEC_mal_class_en))
 
+
+# --- --- --- --- --- --- --- --- --- ---
 # High res landcover data
+# --- --- --- --- --- --- --- --- --- ---
+
 bayarea_rep <- projectRaster(bayarea, crs = crs(puzzles_lauren_sf_anno_sp_sf))
 puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion = extract(bayarea_rep, puzzles_lauren_sf_anno_sp_sf)
 puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion_r = round(puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion)
+table(puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion_r)
+reclass_values <- read_csv(
+  "https://raw.githubusercontent.com/tgelmi-candusso/OSM_for_Ecology/main/reclass_tables/reclass_cec_2_mcsc.csv"
+) # Annotate the landcover classes
+
 
 puzzles_lauren_sf_anno_sp_df = data.frame(puzzles_lauren_sf_anno_sp)
-
+puzzles_lauren_sf_anno_sp_df = data.frame(puzzles_lauren_sf_anno_sp_sf)
 write.csv(puzzles_lauren_sf_anno_sp_df, file = 'Outdir/puzzles_annotate.csv')
 
 require('corrplot')
@@ -94,6 +99,7 @@ corrplot(
   tl.cex = 0.8,         # Text label size
   addCoef.col = "black" # Add numbers in black
 )
+
 
 
 

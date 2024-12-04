@@ -118,11 +118,11 @@ puzzles_lauren_sf_buffered |> data.frame() |> select(-geometry) |>
 # # Number of restaurants within 1km buffer of UWin Locations and within Laurens rasters
 # # Input:
 # 
-# mapview(puzzles_lauren_sf_buffered, 
-#         zcol = "restaurant_count", 
-#         layer.name = "Restaurant Count per Buffer", 
-#         col.regions = viridis::viridis, 
-#         alpha.regions = 0.8)
+mapview(puzzles_lauren_sf_buffered,
+        zcol = "restaurant_count",
+        layer.name = "Restaurant Count per Buffer",
+        col.regions = viridis::viridis,
+        alpha.regions = 0.8)
 
 # Agreement with iNaturalist and eBird + movement
 # -> correlation trail counter information with movement from placer AI has good correlation

@@ -15,7 +15,7 @@ census_api_key('88f3fbb46861a0190c673e39c99bd3c067f15072', install = TRUE, overw
 # census_api_key('88f3fbb46861a0190c673e39c99bd3c067f15072', install = TRUE)
 # puzzles = read.csv('/Users/diegoellis/Downloads/StantonPuzzleStudyLocations_11012024.csv') |>
 #   mutate(states_abbrev ='CA')
-puzzles = read.csv('/Users/diegoellis/Downloads/StantonPuzzleStudyLocations_11042024.csv') |>
+puzzles = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
   mutate(states_abbrev ='CA')
 
 get_income_age=function(df, buffer_size=NA){

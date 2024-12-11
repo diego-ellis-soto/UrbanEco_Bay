@@ -33,6 +33,15 @@ get_osm_restaurants = function(bbox_area){
     osmdata_sf()
 }
 
+get_osm_street_lighting = function(bbox_area){
+  # highway=street_lamp 
+  # https://wiki.openstreetmap.org/wiki/Tag:utility%3Dstreet_lighting
+    rest <- opq(bbox = bbox_area) %>%
+    add_osm_feature(key = "highway", value = "street_lamp") %>%
+    osmdata_sf()
+}
+
+
 get_osm_street = function(bbox_area){
   street <- opq(bbox = bbox_area) %>%
     add_osm_feature(key = "highway") %>%
@@ -82,10 +91,12 @@ buffer_rest_counts = function(df_sf, rest_osm_sf, buffer_size){
 }
 
 
-puzzles_lauren_sf = read.csv('/Users/diegoellis/Downloads/StantonPuzzleStudyLocations_11042024.csv') |>
+puzzles_lauren_sf = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
   st_as_sf(coords = c("Long", "Lat"), crs = 4326)
 
 rest_BA = get_osm_restaurants(bay_area_bbox)
+
+Bay_Area_lights = get_osm_street_lighting(bay_area_bbox)
 
 Bay_Area_street = get_osm_street(bay_area_bbox)
 
@@ -93,6 +104,9 @@ puzzles_lauren_sf_buffered = buffer_rest_counts(
   df = puzzles_lauren_sf,
   rest_osm_sf = rest_BA$osm_points,
   buffer_size = 1000)
+
+
+
 
 puzzles_lauren_sf_buffered |> data.frame() |> dplyr::select(-geometry) |> 
   left_join(puzzles_lauren_sf, by = 'Name') |>

@@ -1,11 +1,15 @@
+# Add street light in restaurant code 
+# add nightlights black marble
+# add ndvi ladnsaty anual
+
 require(tidyverse)
 require(sp)
 require(sf)
 
-puzzles  = read.csv('StantonPuzzleStudyLocations_11042024.csv') |>
+puzzles  = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
   mutate(states_abbrev ='CA')
 
-puzzles_lauren_sf = read.csv('StantonPuzzleStudyLocations_11042024.csv') |>
+puzzles_lauren_sf = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
   st_as_sf(coords = c("Long", "Lat"), crs = 4326)
 
 puzzle_sp = as(puzzles_lauren_sf, 'Spatial')
@@ -152,6 +156,19 @@ left_join(
   hum_mod_bio_1,
   by = 'Name')
 
+# --- --- --- --- --- --- --- ---
+# Road Density
+# --- --- --- --- --- --- --- ---
+
+puzzles_lauren_sf_anno_v4 = puzzles_lauren_sf_anno_v3 |>
+  left_join(
+    puzzles_lauren_sf_utm_buffer_df,
+    by = 'Name')
+
+
+# Nightlights post density!
+# nasa viirs 1km as well
+
 
 reclass_values <- read_csv(
   "https://raw.githubusercontent.com/tgelmi-candusso/OSM_for_Ecology/main/reclass_tables/reclass_cec_2_mcsc.csv"
@@ -161,7 +178,7 @@ write.csv(puzzles_lauren_sf_anno_v3, file = 'Outdir/puzzles_annotate_v3.csv')
 
 require('corrplot')
 
-puzzles_lauren_sf_anno_v3 %>%
+puzzles_lauren_sf_anno_v4 %>%
   as.tibble() |>
   mutate(restaurant_count_num = as.numeric(restaurant_count)) |>
   dplyr::select(mean_income, mean_age,

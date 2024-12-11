@@ -48,3 +48,15 @@
 # LLM connect to SQL to connect to DB -> data size -> we work with tile data -> Code is all open -> 
 
 # Casie talk with Rachel Morello frosch -> Not arc gis sort of stuff
+
+# --- --- ---
+# GeoCoder Shiny App
+
+# Access Scores: 
+
+# Python learning
+
+
+--- --- ---
+  
+  

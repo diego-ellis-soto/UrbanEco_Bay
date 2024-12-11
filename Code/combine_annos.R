@@ -1,6 +1,8 @@
 # Add street light in restaurant code 
 # add nightlights black marble
 # add ndvi ladnsaty anual
+# add pad us
+# add walkable index using osm and roads
 
 require(tidyverse)
 require(sp)
@@ -82,7 +84,7 @@ walk_lauren_locs = st_crop(walkabiltiy, st_bbox(puzzle_sp_tmp_w))
 # 
 puzzle_sp_tmp_w_walkabiltiy_scores = st_intersection(walk_lauren_locs, puzzle_sp_tmp_w) |> 
   as.tibble()  |> 
-  dplyr::select(Name, NatWalkInd, Ac_Total, Ac_Land, Workers)
+  dplyr::select(Name, NatWalkInd, Ac_Total, Ac_Land, Ac_Water, Workers)
 
 
 # --- --- --- --- --- --- ---
@@ -90,13 +92,8 @@ puzzle_sp_tmp_w_walkabiltiy_scores = st_intersection(walk_lauren_locs, puzzle_sp
 # --- --- --- --- --- --- ---
 puzzles_lauren_sf_anno = puzzles_lauren_sf_anno |>
   left_join(puzzle_sp_tmp_impervious_surface_percent,
-            puzzle_sp_tmp_w_walkabiltiy_scores,
-            by='Name')
-
-
-
-
-
+            by='Name') |>
+  left_join(puzzle_sp_tmp_w_walkabiltiy_scores, by='Name')
 
 # --- --- --- --- --- --- ---
 # Landcover
@@ -111,6 +108,8 @@ puzzles_lauren_sf_anno = puzzles_lauren_sf_anno |>
 # --- --- --- --- --- --- --- ---
 # National Landcover Data:
 # --- --- --- --- --- --- --- ---
+puzzles_lauren_sf
+
 puzzles_lauren_sf_anno_sp_sf$CEC_mal_class_en = extract(CEC_map$Class_EN$Class_EN, puzzles_lauren_sf_anno_sp_sf)
 
 # --- --- --- --- --- --- --- --- --- ---
@@ -121,16 +120,15 @@ bayarea_rep <- projectRaster(bayarea, crs = crs(puzzles_lauren_sf_anno_sp_sf))
 puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion = extract(bayarea_rep, puzzles_lauren_sf_anno_sp_sf)
 puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion_r = round(puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion)
 # table(puzzles_lauren_sf_anno_sp_sf$osm_landcov_fusion_r)
-puzzles_lauren_sf_anno_sp_df = data.frame(puzzles_lauren_sf_anno_sp)
+# puzzles_lauren_sf_anno_sp_df = data.frame(puzzles_lauren_sf_anno_sp)
 puzzles_lauren_sf_anno_sp_df = data.frame(puzzles_lauren_sf_anno_sp_sf)
-
-puzzles_lauren_sf_anno # This is the integrated spatial dataset with all the annotated variables
 
 df_tmp_anno = data.frame(puzzles_lauren_sf_anno_sp_df) |>
   dplyr::select(Name, CEC_mal_class_en, 
                 osm_landcov_fusion, osm_landcov_fusion_r)
 
 # Annotated 
+# puzzles_lauren_sf_anno # This is the integrated spatial dataset with all the annotated variables
 puzzles_lauren_sf_anno_v2 = puzzles_lauren_sf_anno |>
   left_join(df_tmp_anno,
             by='Name')
@@ -165,32 +163,65 @@ puzzles_lauren_sf_anno_v4 = puzzles_lauren_sf_anno_v3 |>
     puzzles_lauren_sf_utm_buffer_df,
     by = 'Name')
 
+puzzles_lauren_sf_anno_v4 |>
+  as.tibble() |>
+  dplyr::select(Name, mean_income, mean_age, mean_percent_white,
+                mean_pop_density, mean_housing_density, restaurant_count, imp_surf,
+                NatWalkInd, Ac_Total, Ac_Land, Ac_Water, Workers, CEC_mal_class_en,
+                osm_landcov_fusion, osm_landcov_fusion_r, bio_1, bio_12,
+                human_mod, total_road_length, road_density, area) |>
+  write.csv(file = 'Outdir/puzzles_annotate_v5.csv')
+
+# write.csv(puzzles_lauren_sf_anno_v4, file = 'Outdir/puzzles_annotate_v4.csv')
+
+# --- --- --- --- --- ---
+# Nightlights:
+# --- --- --- --- --- ---
+puzzles_lauren_sf$nightlights = extract(r_2022$t2022, puzzles_lauren_sf)
+puzzles_lauren_sf$nightlights = puzzles_lauren_sf$nightlights$t2022
+
+tmp_nightl = puzzles_lauren_sf |> as.tibble() |>
+  dplyr::select(Name, nightlights)
+
+
+puzzles_lauren_sf_anno_v6 = puzzles_lauren_sf_anno_v4 |>
+  left_join(tmp_nightl, by ='Name')
+
+# --- --- --- --- --- ---
+# Night posts on street!:
+# --- --- --- --- --- ---
+
+
+
+puzzles_lauren_sf_anno_v7 = puzzles_lauren_sf_anno_v6 |>
+  as.tibble() |>
+  dplyr::select(Name, mean_income, mean_age, mean_percent_white,
+                mean_pop_density, mean_housing_density, restaurant_count, imp_surf,
+                NatWalkInd, Ac_Total, Ac_Land, Ac_Water, Workers, CEC_mal_class_en,
+                osm_landcov_fusion, osm_landcov_fusion_r, bio_1, bio_12,
+                human_mod, total_road_length, road_density, area, nightlights) 
+
+write.csv(puzzles_lauren_sf_anno_v7, file = 'Outdir/puzzles_annotate_v7.csv')
 
 # Nightlights post density!
 # nasa viirs 1km as well
 
-
-reclass_values <- read_csv(
-  "https://raw.githubusercontent.com/tgelmi-candusso/OSM_for_Ecology/main/reclass_tables/reclass_cec_2_mcsc.csv"
-) # Annotate the landcover classes
-
-write.csv(puzzles_lauren_sf_anno_v3, file = 'Outdir/puzzles_annotate_v3.csv')
-
 require('corrplot')
-
-puzzles_lauren_sf_anno_v4 %>%
+quartz()
+puzzles_lauren_sf_anno_v7 %>%
   as.tibble() |>
   mutate(restaurant_count_num = as.numeric(restaurant_count)) |>
   dplyr::select(mean_income, mean_age,
                 mean_percent_white, mean_pop_density,
                 mean_housing_density, restaurant_count_num,
                 human_mod, bio_1, bio_12, imp_surf,
-                osm_landcov_fusion_r)  |>
+                osm_landcov_fusion_r, road_density, NatWalkInd,
+                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights)  |>
   cor(use = "complete.obs") |>
   corrplot(
     method = "circle", 
     type = "lower", 
-    tl.cex = 0.8,         # Text label size
+    tl.cex = 0.6,         # Text label size
     addCoef.col = "black" # Add numbers in black
   )
 #
@@ -205,7 +236,11 @@ https://www.spatialedge.co/p/tutorial-downloading-and-processing
 https://worldbank.github.io/blackmarbler/
 # --- --- --- --- --- --- ---
   
-  
+  reclass_values <- read_csv(
+    "https://raw.githubusercontent.com/tgelmi-candusso/OSM_for_Ecology/main/reclass_tables/reclass_cec_2_mcsc.csv"
+  ) # Annotate the landcover classes
+
+
 # --- --- --- --- --- --- --- --- --- ---
 # NDVI - Has problems ####
 # --- --- --- --- --- --- --- --- --- ---
@@ -226,11 +261,8 @@ puzzles_lauren_sf_anno_sp$ndvi = extract(ndvi, puzzles_lauren_sf_anno_sp)
 # Distance to coast
 # Dist2coastline
 # Other variables:
-# Road density
 # CalEnviroScreen: https://oehha.ca.gov/calenviroscreen/maps-data/download-datatidt
-# TIGRIS road density
 # California Specific variables 
-# Single Housing and vacancy housing 
 # NALDC impervious surface https://www.mrlc.gov/data/nlcd-imperviousness-conus-all-years
 # Distance to nearest road
 #  puzzles_lauren_sf_anno |> left_join(puzzle_sp_tmp_impervious_surface_percent)
@@ -241,6 +273,9 @@ puzzles_lauren_sf_anno_sp$ndvi = extract(ndvi, puzzles_lauren_sf_anno_sp)
 # NatWalkInd
 # Landcover type coarse
 # puzzles_lauren_sf_anno_sp$nat_CEC_map = extract(CEC_map, st_as_sf(puzzles_lauren_sf_anno_sp))
+
+# Single Housing and vacancy housing 
+
 # --- --- --- --- --- --- --- --- --- ---
 
 # --- --- --- --- --- --- --- ---

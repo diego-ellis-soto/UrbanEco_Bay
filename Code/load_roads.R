@@ -11,7 +11,7 @@ alameda_roads <- roads(state = "CA", county = "Alameda", year = 2020)
 contra_costa_roads <- roads(state = "CA", county = "Contra Costa", year = 2020)
 # Combine the road data
 all_roads <- rbind(alameda_roads, contra_costa_roads)
-t_all_roads =  st_transform(all_roads, st_crs(puzzles_lauren_sf_anno_v3))
+t_all_roads =  st_transform(all_roads, st_crs(puzzles_lauren_sf))
 
 # Find an appropriate UTM zone for your data
 utm_crs <- st_crs("+proj=utm +zone=10 +datum=WGS84") # Example for California

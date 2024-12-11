@@ -44,7 +44,7 @@ CEC_map <- rast(
 ) 
 
 # Clip to My Study area:
-puzzles_lauren_sf_anno_sp_sf = st_transform(st_as_sf(puzzles_lauren_sf_anno_sp) , crs = crs(CEC_map))
+puzzles_lauren_sf_anno_sp_sf = st_transform(st_as_sf(puzzle_sp) , crs = crs(CEC_map))
 
 # Clip landcover to smaller bounding box:
 # Define bounding box coordinates in longitude and latitude (WGS84)
@@ -112,3 +112,54 @@ walkabiltiy = st_read('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/Walkabil
 # 
 # 
 # # We have this, but not using OSM 
+
+# --- --- --- --- --- --- --- --- --- ---
+# Nightlights
+# --- --- --- --- --- --- --- --- --- ---
+
+# https://worldbank.github.io/blackmarbler/
+require(blackmarbler)
+library(geodata)
+library(sf)
+library(terra)
+library(ggplot2)
+library(tidyterra)
+library(lubridate)
+
+# bearer <- get_nasa_token(username = "XXX", 
+#                          password = "XXX")
+
+bearer <- "eyJ0eXAiOiJKV1QiLCJvcmlnaW4iOiJFYXJ0aGRhdGEgTG9naW4iLCJzaWciOiJlZGxqd3RwdWJrZXlfb3BzIiwiYWxnIjoiUlMyNTYifQ.eyJ0eXBlIjoiVXNlciIsInVpZCI6ImRpZWdvX2VsbGlzIiwiZXhwIjoxNzM5MTE5MzY1LCJpYXQiOjE3MzM5MzUzNjUsImlzcyI6Imh0dHBzOi8vdXJzLmVhcnRoZGF0YS5uYXNhLmdvdiIsImlkZW50aXR5X3Byb3ZpZGVyIjoiZWRsX29wcyIsImFzc3VyYW5jZV9sZXZlbCI6Mn0.oV0XhM6FSwS8dwfoT0jLOJi7GXqH27DyvCqDQqBv6b_4engn5b_yEl6X7LAMwpo2GYDUYS10X7knfzXKb-C_NoPu8IRhnlu10HhKD0Eqrw_aqKOy0NC4GvbGsxWbxOxVh70USapxs8x4k27vfYNXA2ZuTsqDXH9jbeSr6PsTvFHIBBitmMKAPmhhh-voahb4w_L8uIrhe41dSIjMayRse1xrRCmhfowD4dDhnbNbEjAPvwuhwKVTlibJQ5oX77-vsa0Ep3uvWHA5ZdiPojvQk28pOB-dgAxU1mHRXI0qpe_-Y8j1vXxiL_hoOp2pRlTlb4yzACst5f6bwVqohQ1P-A"
+### ROI
+roi_sf <- gadm(country = "USA", level=1, path = tempdir())  |> 
+  dplyr::filter(NAME_1 == 'California')
+# Clip to my study extent:
+
+roi_sf_study_area = crop(roi_sf, st_as_sf(puzzle_sp) )
+
+### Annual data: raster for 2022
+r_2022 <- bm_raster(roi_sf = roi_sf_study_area,
+                    product_id = "VNP46A4",
+                    date = 2022,
+                    bearer = bearer)
+
+r <- r_2022 |> terra::mask(roi_sf_study_area)
+
+## Distribution is skewed, so log
+r[] <- log(r[] + 1)
+
+##### Map
+ggplot() +
+  geom_spatraster(data = r) +
+  scale_fill_gradient2(low = "black",
+                       mid = "yellow",
+                       high = "red",
+                       midpoint = 4.5,
+                       na.value = "transparent") +
+  labs(title = "Nighttime Lights: October 2021") +
+  coord_sf() +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        legend.position = "none")
+
+

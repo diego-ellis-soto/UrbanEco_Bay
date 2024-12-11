@@ -239,5 +239,3 @@ get_percent_white=function(df, buffer_size=NA){
   }
   
 }
-
-

@@ -94,7 +94,7 @@ puzzles_lauren_sf_buffered = buffer_rest_counts(
   rest_osm_sf = rest_BA$osm_points,
   buffer_size = 1000)
 
-puzzles_lauren_sf_buffered |> data.frame() |> select(-geometry) |> 
+puzzles_lauren_sf_buffered |> data.frame() |> dplyr::select(-geometry) |> 
   left_join(puzzles_lauren_sf, by = 'Name') |>
   write.csv(file = '/Users/diegoellis/Desktop/Projects/Postdoc/OSM_for_Ecology/puzzles_lauren_sf_buffered_restaurant_1km.csv')
 

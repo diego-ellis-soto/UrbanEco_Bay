@@ -1,32 +1,33 @@
-# Look at NDVI:
+# Load all variables to later be joined with puzzle locations
+
 require(sf)
 require(mapview)
 require(raster)
 library(rnaturalearth)
 require("rnaturalearthdata")
 require(terra)
+require(blackmarbler) # https://worldbank.github.io/blackmarbler/
+library(geodata)
+library(sf)
+library(terra)
+library(ggplot2)
+library(tidyterra)
+library(lubridate)
+require(terra)
+library(FedData)
+require(sf)
+require(tmap)
+library(rstac)
+library(gdalcubes)
+library(stars)
+library(tmap)
+library(dplyr)
 
-# NDVI
-# ndvi  = raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_NDVI_Sentinel_10.tif')
+
 # # Mask the water:
 continents <- ne_countries(scale = "medium", returnclass = "sf")
 america_continents <- continents[continents$continent %in% c("North America"), ]
 america_continents <- st_transform(america_continents, crs(ndvi))
-
-# puzzles_lauren_spatial <- as(puzzles_lauren_sf_buffered_trans, "Spatial")
-# ndvi_masked <- mask(ndvi, america_continents)
-# mapview(ndvi)
-
-# Not happy with this one either
-# Impervious surface: from this paper: https://essd.copernicus.org/articles/14/1831/2022/
-imp_surf_30 =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_GISD30_Impervious_Surface_30m.tif')
-# mapview(imp_surf_30)
-
-# Did not work:
-# imp_surf_MODIS =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_Impervious_Surface_MODIS_500m.tif')
-# mapview(imp_surf_MODIS)
-
-#  
 human_mod_americas_masked = raster('/Users/diegoellis/Downloads/PressPulsePause/hmod_americas_masked.tif')
 continents <- ne_countries(scale = "medium", returnclass = "sf")
 bio1_masked = raster('/Users/diegoellis/Downloads/PressPulsePause/bio1_americas_masked.tif')
@@ -52,7 +53,6 @@ lon_min <- -123.0
 lon_max <- -121.0  
 lat_min <- 37.0    
 lat_max <- 38.5    
-
 
 # Create a data frame with bounding box coordinates
 bbox_df <- data.frame(
@@ -98,33 +98,10 @@ ncld_imp_surf_2023 <- raster("/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/N
 # puzzle_sp_tmp$imp_surf
 # # National Walkabiltiy Score:
 walkabiltiy = st_read('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/WalkabilityIndex/Natl_WI.gdb')
-# census_data <- get_acs(
-#   geography = "block group",
-#   variables = c("B01003_001E"), # Replace with desired census variables
-#   state = "CA",
-#   county = c("Alameda", "Contra Costa"), # East Bay counties
-#   geometry = TRUE,
-#   year = 2020
-# )
-# 
-# walk_lauren_locs <- st_transform(walk_lauren_locs, crs = st_crs(census_data))
-# walk_lauren_locs$GEOID = walk_lauren_locs$GEOID10
-# 
-# 
 # # We have this, but not using OSM 
-
 # --- --- --- --- --- --- --- --- --- ---
 # Nightlights
 # --- --- --- --- --- --- --- --- --- ---
-
-# https://worldbank.github.io/blackmarbler/
-require(blackmarbler)
-library(geodata)
-library(sf)
-library(terra)
-library(ggplot2)
-library(tidyterra)
-library(lubridate)
 
 # bearer <- get_nasa_token(username = "XXX", 
 #                          password = "XXX")
@@ -133,8 +110,8 @@ bearer <- "eyJ0eXAiOiJKV1QiLCJvcmlnaW4iOiJFYXJ0aGRhdGEgTG9naW4iLCJzaWciOiJlZGxqd
 ### ROI
 roi_sf <- gadm(country = "USA", level=1, path = tempdir())  |> 
   dplyr::filter(NAME_1 == 'California')
-# Clip to my study extent:
 
+# Clip to my study extent:
 roi_sf_study_area = crop(roi_sf, st_as_sf(puzzle_sp) )
 
 ### Annual data: raster for 2022
@@ -167,36 +144,27 @@ ggplot() +
 # Elevation
 # --- --- --- --- --- --- --- --- --- --- --- ---
 
-library(FedData)
 # Get the NED (USA ONLY) - USGS
 NED <- get_ned(
   template = st_as_sfc(st_bbox(puzzles_lauren_sf)),
   label = "East Bay"
 )
-require(terra)
+
 vect_puzzles_lauren_sf = vect(puzzles_lauren_sf)
 NED_UTM = terra::project(NED, y = vect_puzzles_lauren_sf )
 
-
-
-
-require(sf)
-require(tmap)
-library(rstac)
-library(gdalcubes)
-library(stars)
-library(tmap)
-library(dplyr)
+# --- --- --- --- --- --- --- --- --- --- --- ---
+# NDVI
+# --- --- --- --- --- --- --- --- --- --- --- ---
 
 ndvi = raster('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/SF_EastBay_NDVI_Sentinel_10_v4.tif')
+
 # gdalcubes::gdalcubes_options(parallel = TRUE)
 # 
 # 
 # box <- c(xmin=-122.51, ymin=37.71, xmax=-122.36, ymax=37.81) 
 # box <- c(xmin=-122.55, ymin=37.65, xmax=-122.25, ymax=37.95)
 # # box <- c(xmin=-122.51027, ymin=37.59500, xmax=--122.01957, ymax=38.11594)
-# 
-#         
 # 
 # # Make it wider:
 # start_date <- "2022-06-01"
@@ -257,15 +225,13 @@ ndvi = raster('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/SF_EastBay_NDVI_
 #   st_make_valid() |>
 #   dplyr::select(-label_coords)
 # 
-# 
-# 
-# 
-# 
 # PADUS <- get_padus(
 #   template = st_as_sfc(st_bbox(puzzles_lauren_sf)),
 #   label = "East Bay"
 # ) # |> dplyr::select(GAP_Sts, Loc_Nm)
 # 
 # PADUS = PADUS$Manager_Name |> dplyr::select(GAP_Sts, Loc_Nm)
-# 
-# 
+
+# Not happy with this one either
+# Impervious surface: from this paper: https://essd.copernicus.org/articles/14/1831/2022/
+# imp_surf_30 =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_GISD30_Impervious_Surface_30m.tif')

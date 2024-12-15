@@ -1,14 +1,18 @@
-# Redo NDVI with earth engine
-
-# Add street light in restaurant code 
-# add nightlights black marble
-# add ndvi ladnsaty anual
-# add pad us
+# --- --- --- --- --- --- --- --- --- ---
+# Combine socio-economic variables across buzzle locations:
+#
+# Contact: diego.ellissoto@berkeley.edu
+#
+# To do: # add pad us
 # add walkable index using osm and roads
+#
+#
+# --- --- --- --- --- --- --- --- --- ---
 
 require(tidyverse)
 require(sp)
 require(sf)
+library(corrr)
 
 puzzles  = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
   mutate(states_abbrev ='CA')
@@ -243,13 +247,9 @@ puzzles_lauren_sf_buf = puzzles_lauren_sf_buf |>
 puzzles_lauren_sf_anno_v9 = puzzles_lauren_sf_anno_v8 |>
   left_join(puzzles_lauren_sf_buf)
 
-head(puzzles_lauren_sf_anno_v9)
-
 write.csv(puzzles_lauren_sf_anno_v9, file = 'Outdir/puzzles_annotate_v9.csv')
 
-
 puzzles_lauren_sf_anno_v9$road_density <- as.numeric(gsub("\\s*\\[.*\\]", "", puzzles_lauren_sf_anno_v9$road_density))
-
 
 # --- --- --- --- --- ---
 # Human Mobility - Daily/Weekly/Monthly locations for a subset of puzzle locations
@@ -282,30 +282,30 @@ puzzles_lauren_sf_anno_v9 %>%
     tl.cex = 0.4,         # Text label size
     addCoef.col = "black" # Add numbers in black
   )
+
+puzzles_estimates = puzzles_lauren_sf_anno_v9 %>%
+  as.tibble() |>
+  mutate(restaurant_count_num = as.numeric(restaurant_count)) |>
+  dplyr::select(mean_income, mean_age,
+                mean_percent_white, mean_pop_density,
+                mean_housing_density, restaurant_count_num,
+                human_mod, bio_1, bio_12, imp_surf,
+                osm_landcov_fusion_r, road_density, NatWalkInd,
+                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights,
+                elev, ndvi) 
+
+correlations <- correlate(puzzles_estimates, method = 'pearson')
+network_plot(correlations)
+
 #
 # --- --- --- --- --- --- ---
-
-
-
-# Get Nightlight: ####
-# https://rpubs.com/runner157/1113096
-# https://geoffboeing.com/2016/07/visualize-urban-accessibility-walkability
-# Hasta aca llegue ####
-# https://www.spatialedge.co/p/tutorial-downloading-and-processing
-# https://worldbank.github.io/blackmarbler/
+library(car)
 # --- --- --- --- --- --- ---
   
   reclass_values <- read_csv(
     "https://raw.githubusercontent.com/tgelmi-candusso/OSM_for_Ecology/main/reclass_tables/reclass_cec_2_mcsc.csv"
   ) # Annotate the landcover classes
 
-
-# --- --- --- --- --- --- --- --- --- ---
-# NDVI - Has problems ####
-# --- --- --- --- --- --- --- --- --- ---
-puzzles_lauren_sf_anno_sp = as(puzzles_lauren_sf_anno, 'Spatial')
-
-puzzles_lauren_sf_anno_sp$ndvi = extract(ndvi, puzzles_lauren_sf_anno_sp)
 
 # --- --- --- --- --- --- --- --- --- ---
 # PAD-US ####
@@ -315,28 +315,25 @@ puzzles_lauren_sf_anno_sp$ndvi = extract(ndvi, puzzles_lauren_sf_anno_sp)
 # Roads - Still needs work
 # --- --- --- --- --- --- --- --- --- ---
 
-# Next stop: rerun NDVI
 # Greenspace
-# Distance to coast
-# Dist2coastline
+# Distance to coast: https://dominicroye.github.io/en/2019/calculating-the-distance-to-the-sea-in-r/
+
 # Other variables:
 # CalEnviroScreen: https://oehha.ca.gov/calenviroscreen/maps-data/download-datatidt
 # California Specific variables 
 # NALDC impervious surface https://www.mrlc.gov/data/nlcd-imperviousness-conus-all-years
 # Distance to nearest road
-#  puzzles_lauren_sf_anno |> left_join(puzzle_sp_tmp_impervious_surface_percent)
-# Clip to only Laurens puzzles
+
 # mapview(puzzle_sp_tmp_w_walkabiltiy_scores, zcol='Ac_Total')
 # puzzle_sp_tmp_w_nathum_scores = st_intersection(walk_lauren_locs, puzzle_sp_tmp_w)
 # mapview(puzzle_sp_tmp_w_nathum_scores, zcol='NatWalkInd')
 # NatWalkInd
 # Landcover type coarse
-# puzzles_lauren_sf_anno_sp$nat_CEC_map = extract(CEC_map, st_as_sf(puzzles_lauren_sf_anno_sp))
-
 # Single Housing and vacancy housing 
-
 # --- --- --- --- --- --- --- --- --- ---
-
-# The one that did not work well Impervious surface"
-# puzzles_lauren_sf_anno_sp$imp_surf30 = extract(imp_surf_30, puzzles_lauren_sf_anno_sp)
-# Get a better metric? Why so many NA?
+  # https://rpubs.com/runner157/1113096
+  # https://geoffboeing.com/2016/07/visualize-urban-accessibility-walkability
+  # Hasta aca llegue ####
+  # https://www.spatialedge.co/p/tutorial-downloading-and-processing
+  # https://worldbank.github.io/blackmarbler/
+  

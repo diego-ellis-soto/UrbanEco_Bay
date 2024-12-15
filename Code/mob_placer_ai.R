@@ -1,8 +1,17 @@
 # --- --- --- --- --- --- --- --- --- --- --- ---
-# Human Mobility - Placer AI Lauren Camara
-# --- --- --- --- --- --- --- --- --- --- --- ---
-
+# Human Mobility - Placer AI Lauren Camara at Lake Chabeau
+#
+# We can study the weekend effect here pretty strong, or in half of laurens data using safegraph #
+#
+# Explore daily patterns, spatial patterns, and weekday-weekend
 # Ver como lo hicimos en el pasado! - Hacer gg animate
+# Also hourly location visits: Show Chris and Lauren
+# Questions for Lauren: Study site -> This is AWESOME TO TEST THE WEEKEND EFFECT !!!! Altough only at one site unfortuantely?
+# ADD SAFEGRAPH ! -> DAILY FOR THE CENSUS BLOCK GROUPS OF LAURENS LOCSATION! -> WEEKLY SCORES 
+
+# Weekend effect !!!!! -> Make a GG animate of mobility data 
+
+# --- --- --- --- --- --- --- --- --- --- --- ---
 
 library(dplyr)
 library(lubridate)
@@ -45,18 +54,6 @@ bb =  mapview(lake_c_csv_sf_buf)
 
 aa + bb 
 
-# ADD WALKABILIYY INDEX AND TRANPORT INDEX !!!!
-
-head(lake_c_csv)
-
-# Also hourly location visits: Show Chris and Lauren
-# Questions for Lauren: Study site -> This is AWESOME TO TEST THE WEEKEND EFFECT !!!! Altough only at one site unfortuantely?
-
-# ADD SAFEGRAPH ! -> DAILY FOR THE CENSUS BLOCK GROUPS OF LAURENS LOCSATION! -> WEEKLY SCORES 
-
-# Weekend effect !!!!! -> Make a GG animate of mobility data 
-
-
 # --- --- --- --- --- --- --- --- --- ---
 # Plot the weekend effect !
 # --- --- --- --- --- --- --- --- --- ---
@@ -91,10 +88,7 @@ ggplot(df_summary, aes(x = date, y = avg_visits, color = weekend)) +
        color = "Day Type") +
   theme_minimal()
 
-
 # pal8 <- c("#1F78B4",  "#FDBF6F",
-
-
 
 df_summary <- df %>%
   group_by(weekend, date) %>%
@@ -133,18 +127,10 @@ lake_chabot_poly <- lake_chabot_data$osm_multipolygons
 lake_chabot_poly <- subset(lake_chabot_poly, name == "Lake Chabot")
 
 # Visualize the lake using mapview
-
 mapview(lake_chabot_poly, legend = TRUE) + mapview(lake_c_csv_sf_buf)+mapview(lake_chatot_25percent_within_50miles)
   
-
-
 
 mapview(lake_chabot_poly, legend = TRUE, col.regions = "blue") + 
   mapview(puzzles_lauren_with_geoid, col.regions = "red") + 
   mapview(lake_chatot_25percent_within_50miles, col.regions = "green")+
-mapview(lake_chatot_75percent_within_50miles, col.regions = "forestgreen")
-
-
-
-# Next safegraph data:
-
+  mapview(lake_chatot_75percent_within_50miles, col.regions = "forestgreen")

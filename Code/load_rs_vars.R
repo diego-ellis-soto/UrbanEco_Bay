@@ -7,8 +7,8 @@ require("rnaturalearthdata")
 require(terra)
 
 # NDVI
-ndvi  = raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_NDVI_Sentinel_10.tif')
-# Mask the water:
+# ndvi  = raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_NDVI_Sentinel_10.tif')
+# # Mask the water:
 continents <- ne_countries(scale = "medium", returnclass = "sf")
 america_continents <- continents[continents$continent %in% c("North America"), ]
 america_continents <- st_transform(america_continents, crs(ndvi))
@@ -163,3 +163,109 @@ ggplot() +
         legend.position = "none")
 
 
+# --- --- --- --- --- --- --- --- --- --- --- ---
+# Elevation
+# --- --- --- --- --- --- --- --- --- --- --- ---
+
+library(FedData)
+# Get the NED (USA ONLY) - USGS
+NED <- get_ned(
+  template = st_as_sfc(st_bbox(puzzles_lauren_sf)),
+  label = "East Bay"
+)
+require(terra)
+vect_puzzles_lauren_sf = vect(puzzles_lauren_sf)
+NED_UTM = terra::project(NED, y = vect_puzzles_lauren_sf )
+
+
+
+
+require(sf)
+require(tmap)
+library(rstac)
+library(gdalcubes)
+library(stars)
+library(tmap)
+library(dplyr)
+
+ndvi = raster('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/SF_EastBay_NDVI_Sentinel_10_v4.tif')
+# gdalcubes::gdalcubes_options(parallel = TRUE)
+# 
+# 
+# box <- c(xmin=-122.51, ymin=37.71, xmax=-122.36, ymax=37.81) 
+# box <- c(xmin=-122.55, ymin=37.65, xmax=-122.25, ymax=37.95)
+# # box <- c(xmin=-122.51027, ymin=37.59500, xmax=--122.01957, ymax=38.11594)
+# 
+#         
+# 
+# # Make it wider:
+# start_date <- "2022-06-01"
+# end_date <- "2022-12-31"
+# items <-
+#   stac("https://earth-search.aws.element84.com/v0/") |>
+#   stac_search(collections = "sentinel-s2-l2a-cogs",
+#               bbox = box,
+#               datetime = paste(start_date, end_date, sep="/"),
+#               limit = 100) |>
+#   ext_query("eo:cloud_cover" < 20) |>
+#   post_request()
+# 
+# col <- stac_image_collection(items$features, asset_names = c("B08", "B04", "SCL"))
+# 
+# cube <- cube_view(srs ="EPSG:4326",
+#                   extent = list(t0 = start_date, t1 = end_date,
+#                                 left = box[1], right = box[3],
+#                                 top = box[4], bottom = box[2]),
+#                   dx = 0.0001, dy = 0.0001, dt = "P1D",
+#                   aggregation = "median", resampling = "average")
+# 
+# mask <- image_mask("SCL", values=c(3, 8, 9)) # mask clouds and cloud shadows
+# 
+# data <-  raster_cube(col, cube, mask = mask)
+# 
+# ndvi <- data |>
+#   select_bands(c("B04", "B08")) |>
+#   apply_pixel("(B08-B04)/(B08+B04)", "NDVI") |>
+#   reduce_time(c("mean(NDVI)"))
+# 
+# pal8 <- c("#1F78B4",  "#A6CEE3",  "#FDBF6F","#B2DF8A","#33A02C")
+# 
+# pal_mako = viridisLite::mako(30)
+# ndvi_stars <- st_as_stars(ndvi)
+# 
+# # mako <- tm_scale_continuous(values = viridisLite::mako(30))
+# # fill <- tm_scale_continuous(values = "Greens")
+# 
+# di# tmap::tm_shape(ndvi_stars) + tm_raster(col.scale = mako)
+# 
+# # tmap::tm_shape(ndvi_stars) + tm_raster(col.scale=viridisLite::mako())
+# 
+# tmap::tm_shape(ndvi_stars) + tm_raster(palette = pal_mako, title='San Francisco')
+# 
+
+# poly_puzzle <- ndvi |> extract_geom(puzzles_lauren_sf_buf, FUN = mean, reduce_time = TRUE, merge=TRUE)
+# poly <- ndvi |> extract_geom(puzzles_lauren_sf)
+
+
+
+# # Now for luren:
+# # For Lauren"
+# require(raster)
+# 
+# sf <- "/vsicurl/https://dsl.richmond.edu/panorama/redlining/static/citiesData/CASanFrancisco1937/geojson.json" |>
+#   st_read() |>
+#   st_make_valid() |>
+#   dplyr::select(-label_coords)
+# 
+# 
+# 
+# 
+# 
+# PADUS <- get_padus(
+#   template = st_as_sfc(st_bbox(puzzles_lauren_sf)),
+#   label = "East Bay"
+# ) # |> dplyr::select(GAP_Sts, Loc_Nm)
+# 
+# PADUS = PADUS$Manager_Name |> dplyr::select(GAP_Sts, Loc_Nm)
+# 
+# 

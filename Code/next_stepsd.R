@@ -17,23 +17,15 @@
 # Scale and normalize into one score
 
 
-
 # % Greenspace:
 # NDVI 10m sentinel
-# Get better impericous surface
-
 # Dist2coast:
 # Dist2greenspace
 # Openspace
 # Daily Tmax, Tmin, Rain
 # single-multi housing, vacancy, no cars
-# roads density
-# elevation in m
-# Add nightlights NASA VIIRS 1km2 scale
 # Noise?
-# other impervious surface -> 
 # Infrastructure + presence + activity + Rosds? + 
-
 # Next year goals: Ask Cassie for help using open data + climate + people _ open science and generative AI !!!
 # Make a biodiversity access layer -> Cassie +
 # Justice40 categorization of Disadvantaged communities -> 0 or 1 disadvantaged communities

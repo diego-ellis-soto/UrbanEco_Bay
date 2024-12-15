@@ -1,3 +1,5 @@
+# Redo NDVI with earth engine
+
 # Add street light in restaurant code 
 # add nightlights black marble
 # add ndvi ladnsaty anual
@@ -68,10 +70,10 @@ puzzle_sp_tmp_impervious_surface_percent = puzzle_sp_tmp |>
   dplyr::mutate(imp_surf = impervious_furface) |> 
   dplyr::select(Name, imp_surf) |> as.tibble() 
 
-plot(cropped_raster_imp_s, main='Impervious surface')
-points(puzzle_sp_tmp_sp,
-       col ='black',
-       fill='black',cex=1)
+# plot(cropped_raster_imp_s, main='Impervious surface')
+# points(puzzle_sp_tmp_sp,
+#        col ='black',
+#        fill='black',cex=1)
 
 # --- --- --- --- --- --- --- --- --- ---
 # Link Walkability Score
@@ -108,7 +110,7 @@ puzzles_lauren_sf_anno = puzzles_lauren_sf_anno |>
 # --- --- --- --- --- --- --- ---
 # National Landcover Data:
 # --- --- --- --- --- --- --- ---
-puzzles_lauren_sf
+# puzzles_lauren_sf
 
 puzzles_lauren_sf_anno_sp_sf$CEC_mal_class_en = extract(CEC_map$Class_EN$Class_EN, puzzles_lauren_sf_anno_sp_sf)
 
@@ -191,8 +193,6 @@ puzzles_lauren_sf_anno_v6 = puzzles_lauren_sf_anno_v4 |>
 # Night posts on street!:
 # --- --- --- --- --- ---
 
-
-
 puzzles_lauren_sf_anno_v7 = puzzles_lauren_sf_anno_v6 |>
   as.tibble() |>
   dplyr::select(Name, mean_income, mean_age, mean_percent_white,
@@ -203,12 +203,69 @@ puzzles_lauren_sf_anno_v7 = puzzles_lauren_sf_anno_v6 |>
 
 write.csv(puzzles_lauren_sf_anno_v7, file = 'Outdir/puzzles_annotate_v7.csv')
 
+# --- --- --- --- --- ---
+# Elevation
+# --- --- --- --- --- ---
+
+puzzles_lauren_sf$elev = extract(NED_UTM$USGS_1_n38w123, puzzles_lauren_sf)
+puzzles_lauren_sf$elev = puzzles_lauren_sf$elev$USGS_1_n38w123
+
+tmp_pad_us = st_intersection(PADUS, puzzles_lauren_sf) |> dplyr::select(Name, GAP_Sts) |> as.tibble()
+
+# puzzles_lauren_sf$PAD_GAP_Sts = 
+
+
+tmp_elev = puzzles_lauren_sf |> as.tibble() |>
+  dplyr::select(Name, elev)
+
+
+puzzles_lauren_sf_anno_v8 = puzzles_lauren_sf_anno_v7 |>
+  left_join(tmp_elev, by ='Name')
+
+write.csv(puzzles_lauren_sf_anno_v8, file = 'Outdir/puzzles_annotate_v8.csv')
+
+# --- --- --- --- --- ---
+# NDVI # 1km buffer around it
+# --- --- --- --- --- ---
+puzzles_lauren_sf_anno_v8 = read.csv('Outdir/puzzles_annotate_v8.csv')
+
+puzzles_lauren_sf = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
+  st_as_sf(coords = c("Long", "Lat"), crs = 4326)
+
+puzzles_lauren_sf_buf = puzzles_lauren_sf |> st_buffer(1000) 
+
+puzzles_lauren_sf_buf$ndvi = raster::extract(ndvi, puzzles_lauren_sf_buf, fun=mean, na.rm = TRUE)
+
+puzzles_lauren_sf_buf = puzzles_lauren_sf_buf |> 
+  as_tibble() |> dplyr::mutate(ndvi = ndvi[,1]) |> dplyr::select(-geometry, Name, ndvi)
+
+
+puzzles_lauren_sf_anno_v9 = puzzles_lauren_sf_anno_v8 |>
+  left_join(puzzles_lauren_sf_buf)
+
+head(puzzles_lauren_sf_anno_v9)
+
+write.csv(puzzles_lauren_sf_anno_v9, file = 'Outdir/puzzles_annotate_v9.csv')
+
+
+puzzles_lauren_sf_anno_v9$road_density <- as.numeric(gsub("\\s*\\[.*\\]", "", puzzles_lauren_sf_anno_v9$road_density))
+
+
+# --- --- --- --- --- ---
+# Human Mobility - Daily/Weekly/Monthly locations for a subset of puzzle locations
+# --- --- --- --- --- ---
+
+
+# Extract geom daymet and ndvi?
+# CXhcek for heatwave paper and ask carl
+
+
 # Nightlights post density!
-# nasa viirs 1km as well
 
 require('corrplot')
 quartz()
-puzzles_lauren_sf_anno_v7 %>%
+
+puzzles_lauren_sf_anno_v9 %>%
   as.tibble() |>
   mutate(restaurant_count_num = as.numeric(restaurant_count)) |>
   dplyr::select(mean_income, mean_age,
@@ -216,24 +273,26 @@ puzzles_lauren_sf_anno_v7 %>%
                 mean_housing_density, restaurant_count_num,
                 human_mod, bio_1, bio_12, imp_surf,
                 osm_landcov_fusion_r, road_density, NatWalkInd,
-                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights)  |>
+                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights,
+                elev, ndvi)  |>
   cor(use = "complete.obs") |>
   corrplot(
     method = "circle", 
     type = "lower", 
-    tl.cex = 0.6,         # Text label size
+    tl.cex = 0.4,         # Text label size
     addCoef.col = "black" # Add numbers in black
   )
 #
 # --- --- --- --- --- --- ---
+
+
+
 # Get Nightlight: ####
 # https://rpubs.com/runner157/1113096
 # https://geoffboeing.com/2016/07/visualize-urban-accessibility-walkability
-# Python
 # Hasta aca llegue ####
-
-https://www.spatialedge.co/p/tutorial-downloading-and-processing
-https://worldbank.github.io/blackmarbler/
+# https://www.spatialedge.co/p/tutorial-downloading-and-processing
+# https://worldbank.github.io/blackmarbler/
 # --- --- --- --- --- --- ---
   
   reclass_values <- read_csv(
@@ -277,22 +336,6 @@ puzzles_lauren_sf_anno_sp$ndvi = extract(ndvi, puzzles_lauren_sf_anno_sp)
 # Single Housing and vacancy housing 
 
 # --- --- --- --- --- --- --- --- --- ---
-
-# --- --- --- --- --- --- --- ---
-# Mean annual precipitation
-# --- --- --- --- --- --- --- ---
-
-# Specify the version of WorldClim and resolution (10m, 5m, 2.5m, 30s)
-worldclim_version <- "2.1"
-resolution <- 30s  # 10 minutes (~18km)
-
-# Extract the mean annual precipitation (BIO12)
-cat("Extracting Mean Annual Precipitation (BIO12)...\n")
-mean_annual_precip <- bioclim_data[[12]]
-
-# Plot the data
-plot(mean_annual_precip, main = "Mean Annual Precipitation (BIO12)")
-
 
 # The one that did not work well Impervious surface"
 # puzzles_lauren_sf_anno_sp$imp_surf30 = extract(imp_surf_30, puzzles_lauren_sf_anno_sp)

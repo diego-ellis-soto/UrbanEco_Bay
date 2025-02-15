@@ -20,7 +20,7 @@ require(tidycensus)
 require(raster)
 library(reshape2)
 library(units)
-
+library(geosphere)
 
 puzzles  = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
   mutate(states_abbrev ='CA')
@@ -228,4 +228,112 @@ puzzles_lauren_sf_anno_v3 |>
   left_join(puzzle_nightligt) |> # Not buffered to 1km2
   left_join(p_landcover) |>
   left_join(hum_mod_bio_1_bio12)
+
+# --- --- --- --- --- --- --- --- --- ---
+# Link Walkability Score
+# --- --- --- --- --- --- --- --- --- ---
+
+puzzles_lauren_sf_buf_r = puzzles_lauren_sf |> st_buffer(1000) 
+
+puzzle_sp_tmp_w <- st_transform(st_as_sf(puzzles_lauren_sf_buf_r), crs(walkabiltiy))
+walk_lauren_locs = st_crop(walkabiltiy, st_bbox(puzzle_sp_tmp_w))
+# plot(walk_lauren_locs['TotPop'])
+
+puzzle_sp_tmp_w_walkabiltiy_scores = st_intersection(walk_lauren_locs, puzzle_sp_tmp_w) |> 
+  as.tibble()  |> 
+  dplyr::select(Name, NatWalkInd, Ac_Total, Ac_Land, Ac_Water, Workers)
+
+puzzles_lauren_sf_anno_v5 = 
+  puzzles_lauren_sf_anno_v4 |>
+  left_join(puzzle_sp_tmp_w_walkabiltiy_scores) 
+
+# --- --- --- --- --- --- --- --- --- ---
+# Correlation plot
+# --- --- --- --- --- --- --- --- --- ---
+
+quartz()
+puzzles_lauren_sf_anno_v5 %>%
+  as.tibble() |>
+  mutate(restaurant_count_num = as.numeric(restaurant_count.x),
+         nldc_landcover_num = as.numeric(nldc_landcover)) |>
+  dplyr::select(mean_income, mean_age,
+                mean_percent_white, mean_pop_density,
+                mean_housing_density, restaurant_count_num,
+                human_mod, bio_1, bio_12, imp_surf,
+                nldc_landcover_num, road_density, NatWalkInd, # osm_landcov_fusion_r
+                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights,
+                elev, ndvi)  |>
+  cor(use = "complete.obs") |>
+  corrplot(
+    method = "circle", 
+    type = "lower", 
+    tl.cex = 0.4,         # Text label size
+    addCoef.col = "black" # Add numbers in black
+  )
+
+puzzles_estimate = 
+  puzzles_lauren_sf_anno_v5 %>%
+  as.tibble() |>
+  mutate(restaurant_count_num = as.numeric(restaurant_count.x),
+         nldc_landcover_num = as.numeric(nldc_landcover)) |>
+  dplyr::select(mean_income, mean_age,
+                mean_percent_white, mean_pop_density,
+                mean_housing_density, restaurant_count_num,
+                human_mod, bio_1, bio_12, imp_surf,
+                nldc_landcover_num, road_density, NatWalkInd, # osm_landcov_fusion_r
+                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights,
+                elev, ndvi)
+
+correlations <- correlate(puzzles_estimate, method = 'pearson')
+network_plot(correlations)
+
+#  --- --- --- --- --- ---
+# Distance between points:
+#   --- --- --- --- --- ---
+
+coords <- puzzles[, c("Long", "Lat")]
+
+# Compute the full pairwise distance matrix (in meters) as before
+dmat <- distm(coords[, c("Long", "Lat")], fun = distGeo)
+
+# For each point, find the minimum distance to any other point (exclude self-distance of 0)
+min_per_point <- apply(dmat, 1, function(row) min(row[row > 0]))
+
+# See the results (first few points)
+coords$min_distance <- min_per_point
+
+puzzles_distmin = puzzles |> left_join(coords) |> select(Name, min_distance) |> rename(dist2nearest_camera = min_distance)
+
+puzzles_lauren_sf_anno_v5 |>
+  left_join(puzzles_distmin) |>
+mutate(buffer_size = 1000)
+
+
+# 
+# # Compute the pairwise distance matrix
+# d_matrix <- distm(coords, fun = distGeo)
+# diag(d_matrix) <- NA
+# min_distance <- min(d_matrix, na.rm = TRUE)
+# median <- median(d_matrix, na.rm = TRUE)
+# 
+# # Get the indices of the minimum distance
+# closest_indices <- which(d_matrix == min_distance, arr.ind = TRUE)[1, ]
+# closest_pair <- puzzles[closest_indices, "Name"]
+# closest_pair
+# 
+# mean_distance <- median(d_matrix[lower.tri(d_matrix)], na.rm = TRUE)
+# cat("Mean distance between points (in meters):", mean_distance, "\n")
+# [, c("Long", "Lat")]
+# # Compute the pairwise distance matrix
+# d_matrix <- distm(coords, fun = distHaversine)
+# diag(d_matrix) <- NA
+# min_distance <- min(d_matrix, na.rm = TRUE)
+# # Get the indices of the minimum distance
+# closest_indices <- which(d_matrix == min_distance, arr.ind = TRUE)[1, ]
+# closest_pair <- puzzles[closest_indices, "Name"]
+# closest_pair
+# 
+# mean_distance <- median(d_matrix[lower.tri(d_matrix)], na.rm = TRUE)
+# cat("Mean distance between points (in meters):", mean_distance, "\n")
+
 

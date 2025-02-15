@@ -24,6 +24,41 @@ library(tmap)
 library(dplyr)
 
 
+# --- --- --- --- --- --- --- --- --- --- --- ---
+# NDVI - From Google Earth Engine
+# --- --- --- --- --- --- --- --- --- --- --- ---
+
+ndvi = raster('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/SF_EastBay_NDVI_Sentinel_10_v4.tif')
+
+
+# --- --- --- --- --- --- --- --- --- --- --- ---
+# Landcover - From NLDC
+# --- --- --- --- --- --- --- --- --- --- --- ---
+
+xmin = -123.1738
+ymin = 37.5398
+xmax = -122.0818
+ymax = 37.9998 
+
+crssa=4326
+study_area_bbox = st_bbox(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax))
+
+CEC_map <- rast(
+  "/Users/diegoellis/Desktop/Projects/Postdoc/OSM_for_Ecology/land_cover_2020v2_30m_tif/NA_NALCMS_landcover_2020v2_30m/data/NA_NALCMS_landcover_2020v2_30m.tif"
+) 
+
+bbox_sf <- st_as_sfc(st_bbox(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax), 
+                             crs = st_crs(4326)))
+
+bbox_reprojected <- st_transform(bbox_sf, crs = st_crs(CEC_map))
+bbox_vect <- vect(bbox_reprojected)
+
+# Clip the raster
+CEC_map_clipped <- terra::crop(CEC_map, bbox_vect)
+plot(CEC_map_clipped)
+
+# ---
+
 # # Mask the water:
 continents <- ne_countries(scale = "medium", returnclass = "sf")
 america_continents <- continents[continents$continent %in% c("North America"), ]
@@ -152,12 +187,6 @@ NED <- get_ned(
 
 vect_puzzles_lauren_sf = vect(puzzles_lauren_sf)
 NED_UTM = terra::project(NED, y = vect_puzzles_lauren_sf )
-
-# --- --- --- --- --- --- --- --- --- --- --- ---
-# NDVI
-# --- --- --- --- --- --- --- --- --- --- --- ---
-
-ndvi = raster('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/SF_EastBay_NDVI_Sentinel_10_v4.tif')
 
 # gdalcubes::gdalcubes_options(parallel = TRUE)
 # 

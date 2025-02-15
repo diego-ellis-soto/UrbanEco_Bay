@@ -39,8 +39,8 @@ source('Code/Functions/fun_income_race_points.R') # Load functions to obtain cen
 source('Code/get_income_popden_race.R') # Get pop density and housing density based on a buffer
 source('Code/OSM_get_restaurants.R') # restaurant counts within 1000m buffer of locs
 
-source('Code/load_roads.R') # Still needs work
-source('Code/load_rs_vars.R') # Load most of the remote sensing data
+source('Code/load_roads.R') # Load road network to calculate road density and distance to nearest road
+source('Code/Functions/get_rs_vars.R') # Load most of the remote sensing data
 
 
 # dist(puzzles[,c('Long', "Lat")])
@@ -149,28 +149,83 @@ puzzles_lauren_sf_anno_v3 =
 # --- --- --- --- --- --- --- --- --- ---
 
 # Impervious surface
-puzzle_sp_tmp_sp <- as(st_transform(st_as_sf(puzzles_lauren_sf_anno_v3), crs(ncld_imp_surf_2023)),'Spatial')
+puzzles_lauren_sf_buf = puzzles_lauren_sf |> st_buffer(1000) 
 
-puzzle_sp_tmp_sp$impervious_furface = raster::extract(ncld_imp_surf_2023, puzzle_sp_tmp_sp)
+puzzle_sp_tmp_sp <- as(st_transform(st_as_sf(puzzles_lauren_sf_buf), crs(ncld_imp_surf_2023)),'Spatial')
+
+puzzle_sp_tmp_sp$impervious_furface = raster::extract(ncld_imp_surf_2023, puzzle_sp_tmp_sp, fun=mean, na.rm = TRUE)[,1]
 
 puzzle_sp_tmp_impervious_surface_percent = as.tibble(puzzle_sp_tmp_sp) |>
   dplyr::mutate(imp_surf = impervious_furface) |> 
-  dplyr::select(Name, imp_surf) |> as.tibble() 
+  dplyr::select(-geometry, Name, imp_surf) |> as.tibble() 
 
 # NDVI
-puzzle_sp_tmp_sp_ndvi <- as(st_transform(st_as_sf(puzzles_lauren_sf_anno_v3), crs(ndvi)),'Spatial')
+puzzles_lauren_sf_buf = puzzles_lauren_sf |> st_buffer(1000) 
 
-puzzle_sp_tmp_sp_ndvi$ndvi = raster::extract(ndvi, puzzle_sp_tmp_sp_ndvi)
+puzzles_lauren_sf_buf$ndvi = raster::extract(ndvi, puzzles_lauren_sf_buf, fun=mean, na.rm = TRUE)[,1]
 
-p_ndvi = as.tibble(puzzle_sp_tmp_sp_ndvi) |>
-  dplyr::select(Name, ndvi) |> as.tibble() 
+puzzles_lauren_sf_buf_ndvi = puzzles_lauren_sf_buf |> 
+  as_tibble()  |> dplyr::select(Name, ndvi)
+
+# puzzle_sp_tmp_sp_ndvi <- as(st_transform(st_as_sf(puzzles_lauren_sf_anno_v3), crs(ndvi)),'Spatial')
+# 
+# puzzle_sp_tmp_sp_ndvi$ndvi = raster::extract(ndvi, puzzle_sp_tmp_sp_ndvi)
+# 
+# p_ndvi = as.tibble(puzzle_sp_tmp_sp_ndvi) |>
+#   dplyr::select(Name, ndvi) |> as.tibble() 
 
 # Elevation
-puzzle_sp_tmp_sp_elev <- as(st_transform(st_as_sf(puzzles_lauren_sf_anno_v3), crs(NED_UTM_raster)),'Spatial')
+puzzles_lauren_sf_buf = puzzles_lauren_sf |> st_buffer(1000) 
 
-puzzle_sp_tmp_sp_elev$elev = raster::extract(NED_UTM_raster, puzzle_sp_tmp_sp_elev)
+puzzles_lauren_sf_buf_elev <- as(st_transform(st_as_sf(puzzles_lauren_sf_buf), crs(NED_UTM_raster)),'Spatial')
 
-p_ndvi = as.tibble(puzzle_sp_tmp_sp_elev) |>
+puzzles_lauren_sf_buf_elev$elev = raster::extract(NED_UTM_raster, puzzles_lauren_sf_buf_elev, fun=mean, na.rm = TRUE)[,1]
+
+p_elev = as.tibble(puzzle_sp_tmp_sp_elev) |>
   dplyr::select(Name, elev) |> as.tibble() 
 
+# Night light blackmarbler not working anymore on laptop so pulling from previous successful runs:
+
+puzzle_nightligt = read.csv('/Users/diegoellis/Desktop/puzzles_annotate_v9.csv') |>
+  select(Name, nightlights)
+
+# Landcover type:
+puzzles_lauren_sf_buf = puzzles_lauren_sf |> st_buffer(1000) 
+
+puzzle_sp_tmp_sp_landcov <- as(st_transform(st_as_sf(puzzles_lauren_sf_buf), crs(cropped_raster_r)),'Spatial')
+puzzle_sp_tmp_sp_landcov_vect = vect(puzzle_sp_tmp_sp_landcov)
+
+puzzle_sp_tmp_sp_landcov_vect$nldc_landcover = terra::extract(cropped_raster, puzzle_sp_tmp_sp_landcov_vect)[,2]
+# puzzle_sp_tmp_sp_landcov_vect$nldc_landcover = terra::extract(cropped_raster, puzzle_sp_tmp_sp_landcov_vect, fun=median, na.rm = TRUE)[,2]
+
+p_landcover = as.tibble(puzzle_sp_tmp_sp_landcov_vect) |>
+  dplyr::select(Name, nldc_landcover) |> as.tibble() 
+
+# --- --- --- --- --- --- --- ---
+# Mean Annual Temperature, Mean Annual precip
+# --- --- --- --- --- --- --- ---
+
+puzzles_lauren_sf_buf_r = puzzles_lauren_sf |> st_buffer(1000) 
+
+puzzles_lauren_sf_buf_r$human_mod = raster::extract(human_mod_americas_masked, puzzles_lauren_sf_buf_r, fun=mean, na.rm = TRUE)[,1]
+
+puzzles_lauren_sf_buf_r$bio_1 = raster::extract(bio1_masked, puzzles_lauren_sf_buf_r, fun=mean, na.rm = TRUE)[,1]
+
+puzzles_lauren_sf_buf_r$bio_12 = extract(bio_precip, puzzles_lauren_sf_buf_r, fun=mean, na.rm = TRUE)[,1]
+
+hum_mod_bio_1_bio12 = puzzles_lauren_sf_buf_r |> as.tibble() |>
+  dplyr::select(Name, bio_1, bio_12, human_mod) 
+
+# --- --- --- --- --- --- --- ---
+# Left join all remote sensing variables: 
+# --- --- --- --- --- --- --- ---
+
+puzzles_lauren_sf_anno_v4 = 
+puzzles_lauren_sf_anno_v3 |>
+  left_join(puzzle_sp_tmp_impervious_surface_percent) |>
+  left_join(puzzles_lauren_sf_buf_ndvi) |>
+  left_join(p_elev) |>
+  left_join(puzzle_nightligt) |> # Not buffered to 1km2
+  left_join(p_landcover) |>
+  left_join(hum_mod_bio_1_bio12)
 

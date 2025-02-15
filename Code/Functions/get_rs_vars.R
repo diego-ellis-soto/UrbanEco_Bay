@@ -269,3 +269,5 @@ walkabiltiy = st_read('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/Walkabil
 # Not happy with this one either
 # Impervious surface: from this paper: https://essd.copernicus.org/articles/14/1831/2022/
 # imp_surf_30 =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_GISD30_Impervious_Surface_30m.tif')
+
+

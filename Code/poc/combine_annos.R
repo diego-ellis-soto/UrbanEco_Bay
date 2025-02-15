@@ -21,11 +21,11 @@ library(reshape2)
 # --- --- --- --- --- --- --- --- --- ---
 
 source('Code/Functions/fun_income_race_points.R') # Load functions to obtain census income, race, etc  based on a buffer
-source('Code/get_income_popden_race.R') # Get pop density and housing density based on a buffer
-source('Code/OSM_get_restaurants.R') # restaurant counts within 1000m buffer of locs
+source('Code/Functions/get_income_popden_race.R') # Get pop density and housing density based on a buffer
+source('Code/Functions/OSM_get_restaurants.R') # restaurant counts within 1000m buffer of locs
 
-source('Code/load_roads.R') # Still needs work
-source('Code/load_rs_vars.R') # Load most of the remote sensing data
+source('Code/Functions/load_roads.R') # Still needs work
+source('Code/Functions/load_rs_vars.R') # Load most of the remote sensing data
 
 
 puzzles  = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>

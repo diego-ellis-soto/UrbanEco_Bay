@@ -36,11 +36,11 @@ puzzle_sp = as(puzzles_lauren_sf, 'Spatial')
 # --- --- --- --- --- --- --- --- --- ---
 
 source('Code/Functions/fun_income_race_points.R') # Load functions to obtain census income, race, etc  based on a buffer
-source('Code/get_income_popden_race.R') # Get pop density and housing density based on a buffer
-source('Code/OSM_get_restaurants.R') # restaurant counts within 1000m buffer of locs
+source('Code/Functions/get_income_popden_race.R') # Get pop density and housing density based on a buffer
+source('Code/Functions/OSM_get_restaurants.R') # restaurant counts within 1000m buffer of locs
 
-source('Code/load_roads.R') # Load road network to calculate road density and distance to nearest road
-source('Code/Functions/get_rs_vars.R') # Load most of the remote sensing data
+source('Code/Functions/load_roads.R') # Load road network to calculate road density and distance to nearest road
+source('Code/Functions/load_roads.R') # Load most of the remote sensing data
 
 
 # dist(puzzles[,c('Long', "Lat")])
@@ -304,36 +304,8 @@ coords$min_distance <- min_per_point
 
 puzzles_distmin = puzzles |> left_join(coords) |> select(Name, min_distance) |> rename(dist2nearest_camera = min_distance)
 
-puzzles_lauren_sf_anno_v5 |>
+puzzles_lauren_sf_anno_v6 = puzzles_lauren_sf_anno_v5 |>
   left_join(puzzles_distmin) |>
 mutate(buffer_size = 1000)
 
-
-# 
-# # Compute the pairwise distance matrix
-# d_matrix <- distm(coords, fun = distGeo)
-# diag(d_matrix) <- NA
-# min_distance <- min(d_matrix, na.rm = TRUE)
-# median <- median(d_matrix, na.rm = TRUE)
-# 
-# # Get the indices of the minimum distance
-# closest_indices <- which(d_matrix == min_distance, arr.ind = TRUE)[1, ]
-# closest_pair <- puzzles[closest_indices, "Name"]
-# closest_pair
-# 
-# mean_distance <- median(d_matrix[lower.tri(d_matrix)], na.rm = TRUE)
-# cat("Mean distance between points (in meters):", mean_distance, "\n")
-# [, c("Long", "Lat")]
-# # Compute the pairwise distance matrix
-# d_matrix <- distm(coords, fun = distHaversine)
-# diag(d_matrix) <- NA
-# min_distance <- min(d_matrix, na.rm = TRUE)
-# # Get the indices of the minimum distance
-# closest_indices <- which(d_matrix == min_distance, arr.ind = TRUE)[1, ]
-# closest_pair <- puzzles[closest_indices, "Name"]
-# closest_pair
-# 
-# mean_distance <- median(d_matrix[lower.tri(d_matrix)], na.rm = TRUE)
-# cat("Mean distance between points (in meters):", mean_distance, "\n")
-
-
+write.csv(puzzles_lauren_sf_anno_v6, file = 'Outdir/puzzles_lauren_sf_anno_v6_1000m_buffer.csv')

@@ -264,3 +264,32 @@ NED_UTM = terra::project(NED, y = vect_puzzles_lauren_sf )
 # Not happy with this one either
 # Impervious surface: from this paper: https://essd.copernicus.org/articles/14/1831/2022/
 # imp_surf_30 =raster('/Users/diegoellis/Desktop/Projects/Postdoc/Misc_proj_data/BayArea/SF_EastBay_GISD30_Impervious_Surface_30m.tif')
+
+# 
+# # Compute the pairwise distance matrix
+# d_matrix <- distm(coords, fun = distGeo)
+# diag(d_matrix) <- NA
+# min_distance <- min(d_matrix, na.rm = TRUE)
+# median <- median(d_matrix, na.rm = TRUE)
+# 
+# # Get the indices of the minimum distance
+# closest_indices <- which(d_matrix == min_distance, arr.ind = TRUE)[1, ]
+# closest_pair <- puzzles[closest_indices, "Name"]
+# closest_pair
+# 
+# mean_distance <- median(d_matrix[lower.tri(d_matrix)], na.rm = TRUE)
+# cat("Mean distance between points (in meters):", mean_distance, "\n")
+# [, c("Long", "Lat")]
+# # Compute the pairwise distance matrix
+# d_matrix <- distm(coords, fun = distHaversine)
+# diag(d_matrix) <- NA
+# min_distance <- min(d_matrix, na.rm = TRUE)
+# # Get the indices of the minimum distance
+# closest_indices <- which(d_matrix == min_distance, arr.ind = TRUE)[1, ]
+# closest_pair <- puzzles[closest_indices, "Name"]
+# closest_pair
+# 
+# mean_distance <- median(d_matrix[lower.tri(d_matrix)], na.rm = TRUE)
+# cat("Mean distance between points (in meters):", mean_distance, "\n")
+
+

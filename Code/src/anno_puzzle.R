@@ -37,11 +37,11 @@ puzzle_sp = as(puzzles_lauren_sf, 'Spatial')
 
 source('Code/Functions/fun_income_race_points.R') # Load functions to obtain census income, race, etc  based on a buffer
 source('Code/Functions/get_income_popden_race.R') # Get pop density and housing density based on a buffer
-source('Code/Functions/OSM_get_restaurants.R') # restaurant counts within 1000m buffer of locs
+source('Code/Functions/OSM_get_restaurants.R') # restaurant counts within m buffer of locs
 
 source('Code/Functions/load_roads.R') # Load road network to calculate road density and distance to nearest road
-source('Code/Functions/load_roads.R') # Load most of the remote sensing data
-
+# source('Code/Functions/load_rs_vars.R') # Load most of the remote sensing data
+source('Code/Functions/get_rs_vars.R') # Load most of the remote sensing data
 
 # dist(puzzles[,c('Long', "Lat")])
 
@@ -76,7 +76,7 @@ puzzles_lauren_sf_buffered = buffer_rest_counts(
 puzzles_lauren_sf_anno_v2 = 
   puzzles_lauren_sf_anno |> left_join(puzzles_lauren_sf_buffered, by = 'Name')
 
-mapview(puzzles_lauren_sf_anno,
+mapview(puzzles_lauren_sf_anno_v2,
         zcol = "restaurant_count",
         layer.name = "Restaurant Count per Buffer",
         col.regions = viridis::viridis,
@@ -157,7 +157,7 @@ puzzle_sp_tmp_sp$impervious_furface = raster::extract(ncld_imp_surf_2023, puzzle
 
 puzzle_sp_tmp_impervious_surface_percent = as.tibble(puzzle_sp_tmp_sp) |>
   dplyr::mutate(imp_surf = impervious_furface) |> 
-  dplyr::select(-geometry, Name, imp_surf) |> as.tibble() 
+  dplyr::select(Name, imp_surf) |> as.tibble() 
 
 # NDVI
 puzzles_lauren_sf_buf = puzzles_lauren_sf |> st_buffer(1000) 
@@ -181,7 +181,7 @@ puzzles_lauren_sf_buf_elev <- as(st_transform(st_as_sf(puzzles_lauren_sf_buf), c
 
 puzzles_lauren_sf_buf_elev$elev = raster::extract(NED_UTM_raster, puzzles_lauren_sf_buf_elev, fun=mean, na.rm = TRUE)[,1]
 
-p_elev = as.tibble(puzzle_sp_tmp_sp_elev) |>
+p_elev = as.tibble(puzzles_lauren_sf_buf_elev) |>
   dplyr::select(Name, elev) |> as.tibble() 
 
 # Night light blackmarbler not working anymore on laptop so pulling from previous successful runs:
@@ -243,9 +243,11 @@ puzzle_sp_tmp_w_walkabiltiy_scores = st_intersection(walk_lauren_locs, puzzle_sp
   as.tibble()  |> 
   dplyr::select(Name, NatWalkInd, Ac_Total, Ac_Land, Ac_Water, Workers)
 
-puzzles_lauren_sf_anno_v5 = 
-  puzzles_lauren_sf_anno_v4 |>
-  left_join(puzzle_sp_tmp_w_walkabiltiy_scores) 
+# puzzles_lauren_sf_anno_v5 = 
+#   puzzles_lauren_sf_anno_v4 |>
+#   left_join(puzzle_sp_tmp_w_walkabiltiy_scores) 
+
+puzzles_lauren_sf_anno_v5= puzzles_lauren_sf_anno_v4
 
 # --- --- --- --- --- --- --- --- --- ---
 # Correlation plot
@@ -254,14 +256,14 @@ puzzles_lauren_sf_anno_v5 =
 quartz()
 puzzles_lauren_sf_anno_v5 %>%
   as.tibble() |>
-  mutate(restaurant_count_num = as.numeric(restaurant_count.x),
+  mutate(restaurant_count_num = as.numeric(restaurant_count),
          nldc_landcover_num = as.numeric(nldc_landcover)) |>
   dplyr::select(mean_income, mean_age,
                 mean_percent_white, mean_pop_density,
                 mean_housing_density, restaurant_count_num,
                 human_mod, bio_1, bio_12, imp_surf,
-                nldc_landcover_num, road_density, NatWalkInd, # osm_landcov_fusion_r
-                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights,
+                nldc_landcover_num, road_density, nightlights, # osm_landcov_fusion_r
+           #     Ac_Total, Ac_Land, Ac_Water, Workers,NatWalkInd
                 elev, ndvi)  |>
   cor(use = "complete.obs") |>
   corrplot(
@@ -274,17 +276,18 @@ puzzles_lauren_sf_anno_v5 %>%
 puzzles_estimate = 
   puzzles_lauren_sf_anno_v5 %>%
   as.tibble() |>
-  mutate(restaurant_count_num = as.numeric(restaurant_count.x),
+  mutate(restaurant_count_num = as.numeric(restaurant_count),
          nldc_landcover_num = as.numeric(nldc_landcover)) |>
   dplyr::select(mean_income, mean_age,
                 mean_percent_white, mean_pop_density,
                 mean_housing_density, restaurant_count_num,
                 human_mod, bio_1, bio_12, imp_surf,
-                nldc_landcover_num, road_density, NatWalkInd, # osm_landcov_fusion_r
-                Ac_Total, Ac_Land, Ac_Water, Workers, nightlights,
+                nldc_landcover_num, road_density, nightlights, # osm_landcov_fusion_r
+                # Ac_Total, Ac_Land, Ac_Water, Workers,NatWalkInd,
                 elev, ndvi)
 
 correlations <- correlate(puzzles_estimate, method = 'pearson')
+quartz()
 network_plot(correlations)
 
 #  --- --- --- --- --- ---
@@ -308,4 +311,22 @@ puzzles_lauren_sf_anno_v6 = puzzles_lauren_sf_anno_v5 |>
   left_join(puzzles_distmin) |>
 mutate(buffer_size = 1000)
 
+# Annotate to CalEnviroScreen
+calenviro = read.csv('Indir/LASpollution_1000.csv')
+
+puzzles_lauren_sf_anno_v6 = puzzles_lauren_sf_anno_v6 |>
+  left_join(calenviro)
+
 write.csv(puzzles_lauren_sf_anno_v6, file = 'Outdir/puzzles_lauren_sf_anno_v6_1000m_buffer.csv')
+
+
+
+
+#  --- --- --- --- --- ---
+# Annotate human mobility data buffered at 1km:
+#   --- --- --- --- --- ---
+
+# Get daily mobility data for 2022-2023 for all locations and store separately.
+
+
+

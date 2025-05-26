@@ -21,7 +21,7 @@ require(raster)
 library(reshape2)
 library(units)
 library(geosphere)
-
+require(mapview)
 puzzles  = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/StantonPuzzleStudyLocations_11042024.csv') |>
   mutate(states_abbrev ='CA')
 
@@ -29,7 +29,7 @@ puzzles_lauren_sf = read.csv('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/S
   st_as_sf(coords = c("Long", "Lat"), crs = 4326)
 
 puzzle_sp = as(puzzles_lauren_sf, 'Spatial')
-
+mapview(puzzle_sp)
 
 # --- --- --- --- --- --- --- --- --- ---
 # Load functions:

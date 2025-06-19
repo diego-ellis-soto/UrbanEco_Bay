@@ -144,42 +144,51 @@ bio_precip = raster('/Users/diegoellis/Downloads/UrbanEco_EJ_Datasets/CHELSA_pr_
 # Nightlights
 # --- --- --- --- --- --- --- --- --- ---
 # 
-# # bearer <- get_nasa_token(username = "XXX", 
-# #                          password = "XXX")
-# 
+bearer <- get_nasa_token(username = "diego_ellis",password = "Atelopus123!")
+
 # bearer <- "eyJ0eXAiOiJKV1QiLCJvcmlnaW4iOiJFYXJ0aGRhdGEgTG9naW4iLCJzaWciOiJlZGxqd3RwdWJrZXlfb3BzIiwiYWxnIjoiUlMyNTYifQ.eyJ0eXBlIjoiVXNlciIsInVpZCI6ImRpZWdvX2VsbGlzIiwiZXhwIjoxNzM5MTE5MzY1LCJpYXQiOjE3MzM5MzUzNjUsImlzcyI6Imh0dHBzOi8vdXJzLmVhcnRoZGF0YS5uYXNhLmdvdiIsImlkZW50aXR5X3Byb3ZpZGVyIjoiZWRsX29wcyIsImFzc3VyYW5jZV9sZXZlbCI6Mn0.oV0XhM6FSwS8dwfoT0jLOJi7GXqH27DyvCqDQqBv6b_4engn5b_yEl6X7LAMwpo2GYDUYS10X7knfzXKb-C_NoPu8IRhnlu10HhKD0Eqrw_aqKOy0NC4GvbGsxWbxOxVh70USapxs8x4k27vfYNXA2ZuTsqDXH9jbeSr6PsTvFHIBBitmMKAPmhhh-voahb4w_L8uIrhe41dSIjMayRse1xrRCmhfowD4dDhnbNbEjAPvwuhwKVTlibJQ5oX77-vsa0Ep3uvWHA5ZdiPojvQk28pOB-dgAxU1mHRXI0qpe_-Y8j1vXxiL_hoOp2pRlTlb4yzACst5f6bwVqohQ1P-A"
-# ### ROI
-# roi_sf <- gadm(country = "USA", level=1, path = tempdir())  |> 
-#   dplyr::filter(NAME_1 == 'California')
 # 
-# # Clip to my study extent:
+# bearer <- 'eyJ0eXAiOiJKV1QiLCJvcmlnaW4iOiJFYXJ0aGRhdGEgTG9naW4iLCJzaWciOiJlZGxqd3RwdWJrZXlfb3BzIiwiYWxnIjoiUlMyNTYifQ.eyJ0eXBlIjoiVXNlciIsInVpZCI6ImRpZWdvX2VsbGlzIiwiZXhwIjoxNzU1MzAzOTE2LCJpYXQiOjE3NTAxMTk5MTYsImlzcyI6Imh0dHBzOi8vdXJzLmVhcnRoZGF0YS5uYXNhLmdvdiIsImlkZW50aXR5X3Byb3ZpZGVyIjoiZWRsX29wcyIsImFjciI6ImVkbCIsImFzc3VyYW5jZV9sZXZlbCI6M30.QR4vFvb_5PyvKNGNlXlNT2zNjs6nwAba1btIaqRWLnHaNkKGZs6DUUXeO_3MpfzweZFpw_3fjDxOieVhJqHwxmYgpfZMm3PNDbSTH7N1i0Rz67ZiZ3tFfNRcZ4CnwZBHSa0cNKYn2Z_phghQSR8BcCMBjIgZnPcTVU1LK9tLzKhYkriuWDDqdd_WNxz-TIjJtAUzEzJdOKhoVY1OlWdMfUPk11VzL9ZSEdHcv4qYs8I99QSv3IlAvwVtrHzEpoFQU5UaAaRR7YxL6VY_0XUR1mwWFNjnwZL9cNXBHjfTmnU2BIasSP_QMdnucN6VJaUCasl_DD7SFq3gEAkhtL09bQ'
+### ROI
+roi_sf <- gadm(country = "USA", level=1, path = tempdir())  |>
+  dplyr::filter(NAME_1 == 'California')
+
+# # Clip to my study extent with 1km buffer so we have wiggle room for buffering:
 # roi_sf_study_area = terra::crop(roi_sf, st_as_sf(puzzles_lauren_sf) )
+roi_sf_study_area <- terra::crop(
+  roi_sf,
+  st_as_sf(
+    st_buffer(puzzles_lauren_sf, dist = 1000)
+  )
+)
 # 
 # 
 # ### Annual data: raster for 2022
-# r_2022 <- bm_raster(roi_sf = roi_sf_study_area,
-#                     product_id = "VNP46A4",
-#                     date = 2022,
-#                     bearer = bearer)
+r_2022_2023 <- bm_raster(roi_sf = roi_sf_study_area,
+                    product_id = "VNP46A4",
+                    date = 2022:2023,
+                    bearer = bearer)
+#
+r <- r_2022_2023 |> terra::mask(roi_sf_study_area)
+
+# # 
+# # ## Distribution is skewed, so log
+r[] <- log(r[] + 1)
 # 
-# r <- r_2022 |> terra::mask(roi_sf_study_area)
-# 
-# ## Distribution is skewed, so log
-# r[] <- log(r[] + 1)
-# 
-# ##### Map
-# ggplot() +
-#   geom_spatraster(data = r) +
-#   scale_fill_gradient2(low = "black",
-#                        mid = "yellow",
-#                        high = "red",
-#                        midpoint = 4.5,
-#                        na.value = "transparent") +
-#   labs(title = "Nighttime Lights: October 2021") +
-#   coord_sf() +
-#   theme_void() +
-#   theme(plot.title = element_text(face = "bold", hjust = 0.5),
-#         legend.position = "none")
+# # ##### Map
+ggplot() +
+  geom_spatraster(data = r) +
+  scale_fill_gradient2(low = "black",
+                       mid = "yellow",
+                       high = "red",
+                       midpoint = 4.5,
+                       na.value = "transparent") +
+  labs(title = "Nighttime Lights: 2022-2023") +
+  coord_sf() +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        legend.position = "none")
+nightlight_raster = r
 
 # --- --- --- --- --- ---
 
